@@ -24,8 +24,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Cal.com target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}",
+        "const required = [\"calToken\", \"eventTypeId\", \"windowStart\", \"windowEnd\"];",
+        "if (required.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure the local event type, available window, and test token\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -59,8 +64,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Cal.com target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}",
+        "const required = [\"calToken\", \"eventTypeId\", \"windowStart\", \"windowEnd\"];",
+        "if (required.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure the local event type, available window, and test token\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -81,8 +91,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Cal.com target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}",
+        "const required = [\"calToken\", \"eventTypeId\", \"windowStart\", \"windowEnd\"];",
+        "if (required.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure the local event type, available window, and test token\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -109,8 +124,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Cal.com target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}",
+        "const required = [\"calToken\", \"eventTypeId\", \"windowStart\", \"windowEnd\"];",
+        "if (required.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure the local event type, available window, and test token\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     },
@@ -134,8 +154,13 @@
       "setup": [
         "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
         "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.test(\"Disposable loopback Cal.com target required\", () => pm.expect(false).to.equal(true));",
         "  pm.execution.skipRequest();",
-        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}",
+        "const required = [\"calToken\", \"eventTypeId\", \"windowStart\", \"windowEnd\"];",
+        "if (required.some((key) => !String(pm.variables.get(key) ?? \"\").trim())) {",
+        "  pm.test(\"Configure the local event type, available window, and test token\", () => pm.expect(false).to.equal(true));",
+        "  pm.execution.skipRequest();",
         "}"
       ]
     }
