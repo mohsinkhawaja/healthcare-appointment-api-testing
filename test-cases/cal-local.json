@@ -1,0 +1,143 @@
+{
+  "name": "Cal.com v2 booking integration",
+  "description": "Opt-in smoke suite for a configured disposable Cal.com v2 instance.",
+  "variables": {},
+  "cases": [
+    {
+      "id": "CAL-01",
+      "title": "Read two available slots",
+      "path": "/v2/slots?eventTypeId={{eventTypeId}}&start={{windowStart}}&end={{windowEnd}}&timeZone=UTC",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "two slots available": "Object.values(data.data).flat().length >= 2"
+      },
+      "headers": {
+        "Authorization": "Bearer {{calToken}}",
+        "cal-api-version": "2024-09-04"
+      },
+      "capture": {
+        "slotOne": "new Date(Object.values(data.data).flat()[0].start).toISOString()",
+        "slotTwo": "new Date(Object.values(data.data).flat()[1].start).toISOString()"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}"
+      ]
+    },
+    {
+      "id": "CAL-02",
+      "title": "Create synthetic appointment in the first slot",
+      "path": "/v2/bookings",
+      "status": 201,
+      "method": "POST",
+      "assertions": {
+        "appointment UID and event type": "typeof data.data.uid === \"string\" && data.data.eventTypeId === Number(get(\"eventTypeId\"))"
+      },
+      "body": {
+        "eventTypeId": "@number:eventTypeId",
+        "start": "{{slotOne}}",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer {{calToken}}",
+        "cal-api-version": "2026-02-25"
+      },
+      "capture": {
+        "uid": "data.data.uid"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}"
+      ]
+    },
+    {
+      "id": "CAL-03",
+      "title": "Retrieve matching appointment by UID",
+      "path": "/v2/bookings/{{uid}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "UID and start match": "data.data.uid === get(\"uid\") && Date.parse(data.data.start) === Date.parse(get(\"slotOne\"))"
+      },
+      "headers": {
+        "Authorization": "Bearer {{calToken}}",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}"
+      ]
+    },
+    {
+      "id": "CAL-04",
+      "title": "Reschedule synthetic booking",
+      "path": "/v2/bookings/{{uid}}/reschedule",
+      "status": 201,
+      "method": "POST",
+      "assertions": {
+        "new start and UID": "Date.parse(data.data.start) === Date.parse(get(\"slotTwo\")) && typeof data.data.uid === \"string\""
+      },
+      "body": {
+        "start": "{{slotTwo}}"
+      },
+      "headers": {
+        "Authorization": "Bearer {{calToken}}",
+        "cal-api-version": "2026-02-25"
+      },
+      "capture": {
+        "newUid": "data.data.uid"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}"
+      ]
+    },
+    {
+      "id": "CAL-05",
+      "title": "Cancel the synthetic appointment",
+      "path": "/v2/bookings/{{newUid}}/cancel",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "canceled state": "data.data.uid === get(\"newUid\") && /cancelled|canceled/.test(data.data.status)"
+      },
+      "body": {
+        "cancellationReason": "Synthetic integration cleanup"
+      },
+      "headers": {
+        "Authorization": "Bearer {{calToken}}",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false,
+      "setup": [
+        "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+        "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+        "  pm.execution.skipRequest();",
+        "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+        "}"
+      ]
+    }
+  ]
+}

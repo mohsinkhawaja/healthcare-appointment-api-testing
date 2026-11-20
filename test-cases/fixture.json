@@ -1,0 +1,641 @@
+{
+  "name": "Synthetic clinic scheduling contract",
+  "description": "Single-provider, capacity-one appointment model with a fixed reference clock.",
+  "variables": {},
+  "cases": [
+    {
+      "id": "AP-01",
+      "title": "Reject missing authorization",
+      "path": "/v2/bookings",
+      "status": 401,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"AUTH_REQUIRED\""
+      },
+      "headers": {},
+      "cookieJar": false
+    },
+    {
+      "id": "AP-02",
+      "title": "Reject invalid bearer",
+      "path": "/v2/bookings",
+      "status": 401,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"AUTH_REQUIRED\""
+      },
+      "headers": {
+        "Authorization": "Bearer invalid",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-03",
+      "title": "Reject incorrect API version",
+      "path": "/v2/bookings",
+      "status": 400,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"WRONG_API_VERSION\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "1999-01-01"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-04",
+      "title": "List initially empty appointments",
+      "path": "/v2/bookings",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "Array.isArray(data.data) && data.data.length === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-reader",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-05",
+      "title": "Read provider availability in a valid date window",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data[\"2030-01-07\"].length === 3"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-06",
+      "title": "Ignore out-of-window slots",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-08&end=2030-01-09",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "Object.keys(data.data).length === 0"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-07",
+      "title": "Reject invalid IANA timezone",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08&timeZone=Mars/Olympus",
+      "status": 400,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"INVALID_TIME_ZONE\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-08",
+      "title": "Reject reversed scheduling window",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-08&end=2030-01-07",
+      "status": 400,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"INVALID_WINDOW\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-09",
+      "title": "Reject equal start and end",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-07",
+      "status": 400,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"INVALID_WINDOW\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-10",
+      "title": "Reject unknown event type availability",
+      "path": "/v2/slots?eventTypeId=99&start=2030-01-07&end=2030-01-08",
+      "status": 404,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"EVENT_TYPE_NOT_FOUND\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-11",
+      "title": "Read-only role cannot create an appointment",
+      "path": "/v2/bookings",
+      "status": 403,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"READ_ONLY_ROLE\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:00:00.000Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-reader",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-12",
+      "title": "Reject missing attendee",
+      "path": "/v2/bookings",
+      "status": 422,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"INVALID_SYNTHETIC_ATTENDEE\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:00:00.000Z",
+        "attendee": null,
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-13",
+      "title": "Reject invalid synthetic reference",
+      "path": "/v2/bookings",
+      "status": 422,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"PATIENT_REFERENCE_INVALID\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:00:00.000Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "UNKNOWN"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-14",
+      "title": "Reject offset-free timestamp",
+      "path": "/v2/bookings",
+      "status": 400,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"OFFSET_REQUIRED\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:00:00",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-15",
+      "title": "Reject past appointment",
+      "path": "/v2/bookings",
+      "status": 422,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"PAST_SLOT\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-05T09:00:00Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-16",
+      "title": "Reject booking off the slot grid",
+      "path": "/v2/bookings",
+      "status": 422,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"SLOT_OUTSIDE_SCHEDULE\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:01:00Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-17",
+      "title": "Create booking from an offset equivalent to UTC",
+      "path": "/v2/bookings",
+      "status": 201,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.data.status === \"accepted\" && data.data.start === \"2030-01-07T09:00:00.000Z\" && data.data.end === \"2030-01-07T09:30:00.000Z\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T14:00:00+05:00",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "capture": {
+        "firstUid": "data.data.uid"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-18",
+      "title": "Read booking by captured UID",
+      "path": "/v2/bookings/{{firstUid}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data.uid === get(\"firstUid\") && data.data.duration === 30"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-19",
+      "title": "Booking consumes the corresponding slot",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data[\"2030-01-07\"].length === 2 && data.data[\"2030-01-07\"].every(s => s.start !== \"2030-01-07T09:00:00.000Z\")"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-20",
+      "title": "Different offset spelling for same instant conflicts",
+      "path": "/v2/bookings",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"SLOT_TAKEN\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:00:00.000Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-01"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-21",
+      "title": "Accept booking at immediately adjacent slot",
+      "path": "/v2/bookings",
+      "status": 201,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.data.start === \"2030-01-07T09:30:00.000Z\" && data.data.end === \"2030-01-07T10:00:00.000Z\""
+      },
+      "body": {
+        "eventTypeId": 10,
+        "start": "2030-01-07T09:30:00.000Z",
+        "attendee": {
+          "name": "Synthetic Patient One",
+          "email": "patient-a@example.test",
+          "timeZone": "Asia/Karachi",
+          "language": "en"
+        },
+        "bookingFieldsResponses": {
+          "patientReference": "SYNTH-02"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "capture": {
+        "adjacentUid": "data.data.uid"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-22",
+      "title": "Reject reschedule into occupied slot",
+      "path": "/v2/bookings/{{firstUid}}/reschedule",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"SLOT_TAKEN\""
+      },
+      "body": {
+        "start": "2030-01-07T09:30:00.000Z"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-23",
+      "title": "Failed reschedule preserves original booking",
+      "path": "/v2/bookings/{{firstUid}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data.status === \"accepted\" && data.data.start === \"2030-01-07T09:00:00.000Z\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-24",
+      "title": "Reschedule to free slot",
+      "path": "/v2/bookings/{{firstUid}}/reschedule",
+      "status": 201,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.data.start === \"2030-01-07T10:00:00.000Z\" && data.data.uid !== get(\"firstUid\") && data.data.rescheduledFromUid === get(\"firstUid\")"
+      },
+      "body": {
+        "start": "2030-01-07T10:00:00.000Z"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "capture": {
+        "replacementUid": "data.data.uid"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-25",
+      "title": "Original booking links to replacement",
+      "path": "/v2/bookings/{{firstUid}}",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data.status === \"cancelled\" && data.data.rescheduledToUid === get(\"replacementUid\")"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-26",
+      "title": "Original slot is offered again",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data[\"2030-01-07\"].length === 1 && data.data[\"2030-01-07\"][0].start === \"2030-01-07T09:00:00.000Z\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-27",
+      "title": "Reject blank cancellation reason",
+      "path": "/v2/bookings/{{replacementUid}}/cancel",
+      "status": 422,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"REASON_REQUIRED\""
+      },
+      "body": {
+        "cancellationReason": " "
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-28",
+      "title": "Cancel the replacement appointment",
+      "path": "/v2/bookings/{{replacementUid}}/cancel",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.data.status === \"cancelled\" && data.data.cancellationReason === \"Fixture cleanup\""
+      },
+      "body": {
+        "cancellationReason": "Fixture cleanup"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-29",
+      "title": "Canceling already closed booking is rejected",
+      "path": "/v2/bookings/{{replacementUid}}/cancel",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"BOOKING_CLOSED\""
+      },
+      "body": {
+        "cancellationReason": "Fixture cleanup"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-30",
+      "title": "Canceled booking cannot reschedule",
+      "path": "/v2/bookings/{{replacementUid}}/reschedule",
+      "status": 409,
+      "method": "POST",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"BOOKING_CLOSED\""
+      },
+      "body": {
+        "start": "2030-01-07T09:00:00.000Z"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-31",
+      "title": "Cancel adjacent appointment and free all slots",
+      "path": "/v2/bookings/{{adjacentUid}}/cancel",
+      "status": 200,
+      "method": "POST",
+      "assertions": {
+        "contract conditions": "data.data.status === \"cancelled\""
+      },
+      "body": {
+        "cancellationReason": "Fixture cleanup"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-32",
+      "title": "All slots available after cancellation",
+      "path": "/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08",
+      "status": 200,
+      "method": "GET",
+      "assertions": {
+        "contract conditions": "data.data[\"2030-01-07\"].length === 3"
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2024-09-04"
+      },
+      "cookieJar": false
+    },
+    {
+      "id": "AP-33",
+      "title": "Unknown booking ID returns structured 404",
+      "path": "/v2/bookings/synth-missing",
+      "status": 404,
+      "method": "GET",
+      "assertions": {
+        "stable error rule": "data.status === \"error\" && data.error.code === \"BOOKING_NOT_FOUND\""
+      },
+      "headers": {
+        "Authorization": "Bearer fixture-scheduler",
+        "cal-api-version": "2026-02-25"
+      },
+      "cookieJar": false
+    }
+  ]
+}

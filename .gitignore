@@ -1,0 +1,6 @@
+node_modules/
+.env
+.env.*
+*.local.postman_environment.json
+reports/*.xml
+reports/*.json

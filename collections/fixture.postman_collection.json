@@ -1,0 +1,1778 @@
+{
+  "info": {
+    "name": "Synthetic clinic scheduling contract",
+    "description": "Single-provider, capacity-one appointment model with a fixed reference clock.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "AP-01 | Reject missing authorization",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [401];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-01 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-01 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-01 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"AUTH_REQUIRED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/v2/bookings"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-02 | Reject invalid bearer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [401];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-02 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-02 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-02 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"AUTH_REQUIRED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-03 | Reject incorrect API version",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-03 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-03 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-03 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"WRONG_API_VERSION\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "1999-01-01"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-04 | List initially empty appointments",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-04 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-04 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-04 | contract conditions\", () => {",
+              "    pm.expect(Boolean(Array.isArray(data.data) && data.data.length === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-reader"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-05 | Read provider availability in a valid date window",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-05 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-05 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-05 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data[\"2030-01-07\"].length === 3)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-06 | Ignore out-of-window slots",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-06 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-06 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-06 | contract conditions\", () => {",
+              "    pm.expect(Boolean(Object.keys(data.data).length === 0)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-08&end=2030-01-09"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-07 | Reject invalid IANA timezone",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-07 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-07 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-07 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"INVALID_TIME_ZONE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08&timeZone=Mars/Olympus"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-08 | Reject reversed scheduling window",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-08 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-08 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-08 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"INVALID_WINDOW\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-08&end=2030-01-07"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-09 | Reject equal start and end",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-09 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-09 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-09 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"INVALID_WINDOW\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-07"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-10 | Reject unknown event type availability",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [404];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-10 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-10 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-10 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"EVENT_TYPE_NOT_FOUND\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=99&start=2030-01-07&end=2030-01-08"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-11 | Read-only role cannot create an appointment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [403];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-11 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-11 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-11 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"READ_ONLY_ROLE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-reader"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:00:00.000Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-12 | Reject missing attendee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [422];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-12 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-12 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-12 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"INVALID_SYNTHETIC_ATTENDEE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:00:00.000Z\",\n  \"attendee\": null,\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-13 | Reject invalid synthetic reference",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [422];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-13 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-13 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-13 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"PATIENT_REFERENCE_INVALID\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:00:00.000Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"UNKNOWN\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-14 | Reject offset-free timestamp",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [400];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-14 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-14 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-14 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"OFFSET_REQUIRED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:00:00\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-15 | Reject past appointment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [422];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-15 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-15 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-15 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"PAST_SLOT\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-05T09:00:00Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-16 | Reject booking off the slot grid",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [422];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-16 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-16 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-16 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"SLOT_OUTSIDE_SCHEDULE\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:01:00Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-17 | Create booking from an offset equivalent to UTC",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [201];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-17 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-17 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-17 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.status === \"accepted\" && data.data.start === \"2030-01-07T09:00:00.000Z\" && data.data.end === \"2030-01-07T09:30:00.000Z\")).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.data.uid;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"firstUid\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T14:00:00+05:00\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-18 | Read booking by captured UID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-18 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-18 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-18 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.uid === get(\"firstUid\") && data.data.duration === 30)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{firstUid}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-19 | Booking consumes the corresponding slot",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-19 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-19 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-19 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data[\"2030-01-07\"].length === 2 && data.data[\"2030-01-07\"].every(s => s.start !== \"2030-01-07T09:00:00.000Z\"))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-20 | Different offset spelling for same instant conflicts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-20 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-20 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-20 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"SLOT_TAKEN\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:00:00.000Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-01\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-21 | Accept booking at immediately adjacent slot",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [201];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-21 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-21 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-21 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.start === \"2030-01-07T09:30:00.000Z\" && data.data.end === \"2030-01-07T10:00:00.000Z\")).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.data.uid;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"adjacentUid\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": 10,\n  \"start\": \"2030-01-07T09:30:00.000Z\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  },\n  \"bookingFieldsResponses\": {\n    \"patientReference\": \"SYNTH-02\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-22 | Reject reschedule into occupied slot",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-22 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-22 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-22 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"SLOT_TAKEN\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{firstUid}}/reschedule",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"2030-01-07T09:30:00.000Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-23 | Failed reschedule preserves original booking",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-23 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-23 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-23 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.status === \"accepted\" && data.data.start === \"2030-01-07T09:00:00.000Z\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{firstUid}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-24 | Reschedule to free slot",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [201];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-24 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-24 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-24 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.start === \"2030-01-07T10:00:00.000Z\" && data.data.uid !== get(\"firstUid\") && data.data.rescheduledFromUid === get(\"firstUid\"))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.data.uid;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"replacementUid\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{firstUid}}/reschedule",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"2030-01-07T10:00:00.000Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-25 | Original booking links to replacement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-25 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-25 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-25 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.status === \"cancelled\" && data.data.rescheduledToUid === get(\"replacementUid\"))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{firstUid}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-26 | Original slot is offered again",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-26 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-26 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-26 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data[\"2030-01-07\"].length === 1 && data.data[\"2030-01-07\"][0].start === \"2030-01-07T09:00:00.000Z\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-27 | Reject blank cancellation reason",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [422];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-27 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-27 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-27 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"REASON_REQUIRED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{replacementUid}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancellationReason\": \" \"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-28 | Cancel the replacement appointment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-28 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-28 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-28 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.status === \"cancelled\" && data.data.cancellationReason === \"Fixture cleanup\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{replacementUid}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancellationReason\": \"Fixture cleanup\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-29 | Canceling already closed booking is rejected",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-29 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-29 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-29 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"BOOKING_CLOSED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{replacementUid}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancellationReason\": \"Fixture cleanup\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-30 | Canceled booking cannot reschedule",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [409];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-30 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-30 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-30 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"BOOKING_CLOSED\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{replacementUid}}/reschedule",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"2030-01-07T09:00:00.000Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-31 | Cancel adjacent appointment and free all slots",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-31 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-31 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-31 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data.status === \"cancelled\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{adjacentUid}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancellationReason\": \"Fixture cleanup\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-32 | All slots available after cancellation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-32 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-32 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-32 | contract conditions\", () => {",
+              "    pm.expect(Boolean(data.data[\"2030-01-07\"].length === 3)).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId=10&start=2030-01-07&end=2030-01-08"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "AP-33 | Unknown booking ID returns structured 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [404];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"AP-33 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"AP-33 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"AP-33 | stable error rule\", () => {",
+              "    pm.expect(Boolean(data.status === \"error\" && data.error.code === \"BOOKING_NOT_FOUND\")).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer fixture-scheduler"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/synth-missing"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    }
+  ]
+}

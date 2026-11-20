@@ -1,0 +1,373 @@
+{
+  "info": {
+    "name": "Cal.com v2 booking integration",
+    "description": "Opt-in smoke suite for a configured disposable Cal.com v2 instance.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "item": [
+    {
+      "name": "CAL-01 | Read two available slots",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"CAL-01 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"CAL-01 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"CAL-01 | two slots available\", () => {",
+              "    pm.expect(Boolean(Object.values(data.data).flat().length >= 2)).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = new Date(Object.values(data.data).flat()[0].start).toISOString();",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"slotOne\", value);",
+              "    }",
+              "  }",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = new Date(Object.values(data.data).flat()[1].start).toISOString();",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"slotTwo\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{calToken}}"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2024-09-04"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/slots?eventTypeId={{eventTypeId}}&start={{windowStart}}&end={{windowEnd}}&timeZone=UTC"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "CAL-02 | Create synthetic appointment in the first slot",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [201];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"CAL-02 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"CAL-02 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"CAL-02 | appointment UID and event type\", () => {",
+              "    pm.expect(Boolean(typeof data.data.uid === \"string\" && data.data.eventTypeId === Number(get(\"eventTypeId\")))).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.data.uid;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"uid\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{calToken}}"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventTypeId\": {{eventTypeId}},\n  \"start\": \"{{slotOne}}\",\n  \"attendee\": {\n    \"name\": \"Synthetic Patient One\",\n    \"email\": \"patient-a@example.test\",\n    \"timeZone\": \"Asia/Karachi\",\n    \"language\": \"en\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "CAL-03 | Retrieve matching appointment by UID",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"CAL-03 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"CAL-03 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"CAL-03 | UID and start match\", () => {",
+              "    pm.expect(Boolean(data.data.uid === get(\"uid\") && Date.parse(data.data.start) === Date.parse(get(\"slotOne\")))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{calToken}}"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{uid}}"
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "CAL-04 | Reschedule synthetic booking",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [201];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"CAL-04 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"CAL-04 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"CAL-04 | new start and UID\", () => {",
+              "    pm.expect(Boolean(Date.parse(data.data.start) === Date.parse(get(\"slotTwo\")) && typeof data.data.uid === \"string\")).to.equal(true);",
+              "  });",
+              "  if (data !== null && expectedStatus.includes(responseStatus)) {",
+              "    const value = data.data.uid;",
+              "    if (value !== undefined && value !== null) {",
+              "      pm.collectionVariables.set(\"newUid\", value);",
+              "    }",
+              "  }",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{calToken}}"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{uid}}/reschedule",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": \"{{slotTwo}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    },
+    {
+      "name": "CAL-05 | Cancel the synthetic appointment",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const base = pm.variables.replaceIn(\"{{baseUrl}}\");",
+              "if (!/^http:\\/\\/(localhost|127\\.0\\.0\\.1):[0-9]+$/.test(base)) {",
+              "  pm.execution.skipRequest();",
+              "  throw new Error(\"Set baseUrl to a disposable Cal.com loopback target\");",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(() => {",
+              "  const expectedStatus = [200];",
+              "  const responseStatus = pm.response.code;",
+              "  pm.test(\"CAL-05 | expected HTTP status\", () => {",
+              "    pm.expect(responseStatus).to.be.oneOf(expectedStatus);",
+              "  });",
+              "  const get = (key) => pm.variables.get(key);",
+              "  let data;",
+              "  try { data = pm.response.json(); } catch { data = null; }",
+              "  pm.test(\"CAL-05 | JSON response body\", () => {",
+              "    pm.expect(data).not.to.equal(null);",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/json/i);",
+              "  });",
+              "  pm.test(\"CAL-05 | canceled state\", () => {",
+              "    pm.expect(Boolean(data.data.uid === get(\"newUid\") && /cancelled|canceled/.test(data.data.status))).to.equal(true);",
+              "  });",
+              "})();"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{calToken}}"
+          },
+          {
+            "key": "cal-api-version",
+            "value": "2026-02-25"
+          }
+        ],
+        "url": "{{baseUrl}}/v2/bookings/{{newUid}}/cancel",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cancellationReason\": \"Synthetic integration cleanup\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "protocolProfileBehavior": {
+        "disableCookies": true
+      }
+    }
+  ]
+}
